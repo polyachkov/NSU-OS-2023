@@ -126,8 +126,8 @@ int main(int argc, char const *argv[]) {
         }
         if ((sc != 1) || findLine < 0 || findLine > table.size) {
             fprintf(stderr, "Incorrect number of line. line should be a number from 1 to %d.", table.size);
-            char c;
-            while ((c = getchar()) != '\n' && c != EOF); // replacement for __fpurge
+            fscanf(stdin,"%*[^\n]"); // replacement for __fpurge
+            // fflush(stdin);
             continue;
         }
         findLine--;
@@ -150,8 +150,8 @@ int main(int argc, char const *argv[]) {
             bytes_left -= bytes_read;
             fwrite(buffer_str, sizeof(char), bytes_read, stdout);
             if (ferror(stdout)) { // нормально сделать обработку ошибок fwrite
-                fprintf(stderr, "Error writing to stdout");
-                exit(EXIT_FAILURE);
+                    fprintf(stderr, "Error writing to stdout");
+                    exit(EXIT_FAILURE);
                 }
         }
     }
