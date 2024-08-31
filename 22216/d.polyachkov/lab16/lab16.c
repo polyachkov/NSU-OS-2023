@@ -25,11 +25,17 @@ void reset_terminal_mode(struct termios *original_settings) {
 }
 
 int main() {
+    if (!isatty(STDIN_FILENO)) {
+        fprintf(stderr, "Standard input is not a terminal.\n");
+        return -1;
+    }
+
     struct termios original_settings;
     if (tcgetattr(STDIN_FILENO, &original_settings) != 0) {
         perror("Error getting terminal attributes");
         return -1;
     }
+
     set_terminal_mode();
 
     printf("Continue? (y/n): ");
