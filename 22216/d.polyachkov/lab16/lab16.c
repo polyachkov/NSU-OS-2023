@@ -3,15 +3,15 @@
 #include <termios.h>
 #include <unistd.h>
 
-void set_terminal_mode() {
-    struct termios new_settings;
-    if (tcgetattr(STDIN_FILENO, &new_settings) != 0) {
+void set_terminal_mode(struct termios *new_settings) {
+    if (tcgetattr(STDIN_FILENO, new_settings) != 0) {
         perror("Error getting terminal attributes");
         exit(-1);
     }
-    new_settings.c_lflag &= ~ICANON;
-    new_settings.c_lflag &= ~ECHO;
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &new_settings) != 0) {
+    new_settings->c_lflag &= ~(ICANON | ECHO); 
+    new_settings->c_cc[VMIN] = 1; 
+    new_settings->c_cc[VTIME] = 0; 
+    if (tcsetattr(STDIN_FILENO, TCSANOW, new_settings) != 0) {
         perror("Error setting terminal attributes");
         exit(-1);
     }
@@ -30,13 +30,13 @@ int main() {
         return -1;
     }
 
-    struct termios original_settings;
+    struct termios original_settings, new_settings;
     if (tcgetattr(STDIN_FILENO, &original_settings) != 0) {
         perror("Error getting terminal attributes");
         return -1;
     }
 
-    set_terminal_mode();
+    set_terminal_mode(&new_settings);
 
     printf("Continue? (y/n): ");
     fflush(stdout);
