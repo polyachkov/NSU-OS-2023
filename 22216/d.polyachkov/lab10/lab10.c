@@ -5,7 +5,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        fprintf(stderr, "%s Erorr in usage. Please type COMMAND [arguments]\n", argv[0]);
+        fprintf(stderr, " Error in usage. Please type: %s COMMAND [ARGUMENTS...]\n", argv[0]);
         return 1;
     }
 
