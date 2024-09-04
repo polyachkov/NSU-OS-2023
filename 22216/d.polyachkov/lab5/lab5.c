@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdio_ext.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -13,7 +12,6 @@ typedef struct {
     int capacity;
 } DynamArr;
 
-
 void freedynamArr(DynamArr *dynamArr) {
     free(dynamArr->offsets);
     free(dynamArr->lengths);
@@ -24,12 +22,13 @@ void freedynamArr(DynamArr *dynamArr) {
 int initdynamArr(DynamArr *dynamArr) {
     dynamArr->offsets = (off_t *) malloc(START_SIZE * sizeof(off_t));
     if (dynamArr->offsets == NULL) {
-        perror("Error malloc ");
+        perror("Error malloc");
         return -1;
     }
     dynamArr->lengths = (off_t *) malloc(START_SIZE * sizeof(off_t));
-    if (dynamArr->offsets == NULL) {
-        perror("Error malloc ");
+    if (dynamArr->lengths == NULL) {
+        perror("Error malloc");
+        free(dynamArr->offsets);
         return -1;
     }
     dynamArr->size = 0;
@@ -41,18 +40,16 @@ int add(DynamArr *dynamArr, off_t offset, off_t length) {
     if (dynamArr->size == dynamArr->capacity) {
         dynamArr->capacity *= 2;
 
-        off_t* newo;
-        newo = (off_t *) realloc(dynamArr->offsets, dynamArr->capacity * sizeof(off_t));
+        off_t* newo = (off_t *) realloc(dynamArr->offsets, dynamArr->capacity * sizeof(off_t));
         if (newo == NULL) {
-            perror("Error realloc ");
+            perror("Error realloc");
             return -1;
         }
         dynamArr->offsets = newo;
 
-        off_t* newl;
-        newl = (off_t *) realloc(dynamArr->lengths, dynamArr->capacity * sizeof(off_t));
+        off_t* newl = (off_t *) realloc(dynamArr->lengths, dynamArr->capacity * sizeof(off_t));
         if (newl == NULL) {
-            perror("Error realloc ");
+            perror("Error realloc");
             return -1;
         }
         dynamArr->lengths = newl;
@@ -62,24 +59,21 @@ int add(DynamArr *dynamArr, off_t offset, off_t length) {
     return 0;
 }
 
-
-
 int main(int argc, char const *argv[]) {
     if (argc != 2) {
-        fprintf(stderr, "Error input of programm. Programm usage example is: \n%s <filename>\n", argv[0]);
+        fprintf(stderr, "Error: Incorrect usage.\nUsage: %s <filename>\n", argv[0]);
         return -1;
     }
-
 
     int fd = open(argv[1], O_RDONLY);
     if (fd == -1) {
         perror("Error opening file");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     DynamArr table;
-    if(initdynamArr(&table) < 0) {
-        exit(EXIT_FAILURE);
+    if (initdynamArr(&table) < 0) {
+        return -1;
     } 
 
     char buffer[BUFSIZ];
@@ -87,46 +81,46 @@ int main(int argc, char const *argv[]) {
     off_t prev_offset = 0;
     off_t curr_offset = 0;
 
-
     while ((bytes_read = read(fd, buffer, BUFSIZ)) > 0) {
         for (int i = 0; i < bytes_read; i++) {
             curr_offset++;
             if (buffer[i] == '\n') {
-                if(add(&table, prev_offset, curr_offset - prev_offset) < 0) {
-                    exit(EXIT_FAILURE);
+                if (add(&table, prev_offset, curr_offset - prev_offset) < 0) {
+                    freedynamArr(&table);
+                    return -1;
                 }
                 prev_offset = curr_offset;
             }
         }
     }
 
-    if(add(&table, prev_offset, curr_offset - prev_offset) < 0) {
-        exit(EXIT_FAILURE);
-    }
-
     if (bytes_read == -1) {
         perror("Error reading file");
-        exit(EXIT_FAILURE);
+        freedynamArr(&table);
+        return -1;
+    }
+
+    if (add(&table, prev_offset, curr_offset - prev_offset) < 0) {
+        freedynamArr(&table);
+        return -1;
     }
 
     if (table.size == 0) {
-        printf("File is empty. Nothing to do. End of the programm\n");
+        printf("File is empty. Nothing to do. End of the program.\n");
         return 0;
     }
 
-
-
-    while(1) {
-        
+    while (1) {
         int findLine = -1;
         printf("\nInput number of target line: ");
         int sc = scanf("%d", &findLine);
-        if (sc == EOF || findLine == 0) {
+        if (sc == EOF || findLine == 0) { //sc == EOF - check for ctrl + D
             break;
         }
-        if ((sc != 1) || findLine < 0 || findLine > table.size) {
-            fprintf(stderr, "Incorrect number of line. line should be a number from 1 to %d.", table.size);
-            fscanf(stdin,"%*[^\n]"); // replacement for __fpurge
+        if (sc != 1 || findLine < 0 || findLine > table.size) {
+            fprintf(stderr, "Incorrect line number. Line should be a number from 1 to %d.\n", table.size);
+            int ch;
+            while ((ch = getchar()) != '\n' && ch != EOF);
             continue;
         }
         findLine--;
@@ -141,17 +135,19 @@ int main(int argc, char const *argv[]) {
             ssize_t bytes_read = read(fd, buffer_str, read_size);
             if (bytes_read <= 0) {
                 if (bytes_read == -1) {
-                    perror("Error reading file");   
-                    exit(EXIT_FAILURE);
+                    perror("Error reading file");
+                    freedynamArr(&table);
+                    return -1;
                 }
                 break;
             }
             bytes_left -= bytes_read;
             fwrite(buffer_str, sizeof(char), bytes_read, stdout);
             if (ferror(stdout)) { 
-                    fprintf(stderr, "Error writing to stdout");
-                    exit(EXIT_FAILURE);
-                }
+                fprintf(stderr, "Error writing to stdout");
+                freedynamArr(&table);
+                return -1;
+            }
         }
     }
 
