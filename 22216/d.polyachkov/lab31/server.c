@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #define BUFFER_SIZE 1024
-#define MAX_CONNECTIONS 10
+#define MAX_CONNECTIONS 5
 
 void to_uppercase(char *str) {
     for (int i = 0; str[i]; i++) {
@@ -17,8 +17,8 @@ void to_uppercase(char *str) {
     }
 }
 
-void cleanup(int signum, const char *socket_path) {
-    unlink(socket_path);
+void cleanup(int signum) {
+    unlink("/tmp/tcp_unix_socket");
     exit(0);
 }
 
@@ -52,7 +52,7 @@ int setup_server_socket(const char *socket_path) {
     return server_fd;
 }
 
-void handle_connections(int server_fd, const char *socket_path) {
+void handle_connections(int server_fd) {
     struct pollfd fds[MAX_CONNECTIONS];
     int connection_count = 0;
     char buffer[BUFFER_SIZE];
@@ -102,10 +102,17 @@ void handle_connections(int server_fd, const char *socket_path) {
 
 int main() {
     const char *socket_path = "/tmp/tcp_unix_socket";
-    signal(SIGINT, (void (*)(int))cleanup);
+    struct sigaction sa;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = cleanup;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
 
     int server_fd = setup_server_socket(socket_path);
-    handle_connections(server_fd, socket_path);
+    handle_connections(server_fd);
 
     close(server_fd);
     unlink(socket_path);
