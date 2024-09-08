@@ -125,7 +125,7 @@ int main(int argc, char const *argv[]) {
         }
         if (sc != 1 || findLine < 0 || findLine > table.size) {
             fprintf(stderr, "Incorrect line number. Line should be a number from 1 to %d.\n", table.size);
-            char ch;
+            int ch;
             while ((ch = getchar()) != '\n' && ch != EOF);
             continue;
         }
