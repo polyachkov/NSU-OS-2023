@@ -119,7 +119,7 @@ int main(int argc, char const *argv[]) {
             break;
         }
         if (sc == 1){
-            if (findline == 0){
+            if (findLine == 0){
                 break;
             }
         }
