@@ -114,8 +114,14 @@ int main(int argc, char const *argv[]) {
         int findLine = -1;
         printf("\nInput number of target line: ");
         int sc = scanf("%d", &findLine);
-        if (sc == EOF || findLine == 0) { //sc == EOF - check for ctrl + D
+        
+        if (feof(stdin)) { //sc == EOF - check for ctrl + D
             break;
+        }
+        if (sc == 1){
+            if (findline == 0){
+                break;
+            }
         }
         if (sc != 1 || findLine < 0 || findLine > table.size) {
             fprintf(stderr, "Incorrect line number. Line should be a number from 1 to %d.\n", table.size);
