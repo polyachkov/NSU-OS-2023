@@ -19,7 +19,7 @@ void to_uppercase(char *str) {
 
 void cleanup(int signum) {
     unlink("/tmp/tcp_unix_socket");
-    exit(0);
+    _exit(0);
 }
 
 int setup_server_socket(const char *socket_path) {
@@ -53,9 +53,9 @@ int setup_server_socket(const char *socket_path) {
 }
 
 void handle_connections(int server_fd) {
-    struct pollfd fds[MAX_CONNECTIONS];
+    struct pollfd fds[MAX_CONNECTIONS + 1];
     int connection_count = 0;
-    char buffer[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE + 1];
 
     fds[0].fd = server_fd;
     fds[0].events = POLLIN;
@@ -75,6 +75,9 @@ void handle_connections(int server_fd) {
                 fds[connection_count + 1].fd = client_fd;
                 fds[connection_count + 1].events = POLLIN;
                 connection_count++;
+                if (connection_count == MAX_CONNECTIONS){
+                    fds[0].events = 0;
+                }
             }
         }
 
@@ -85,15 +88,14 @@ void handle_connections(int server_fd) {
                     buffer[read_len] = '\0';
                     to_uppercase(buffer);
                     printf("Received: %s\n", buffer);
-                } else if (read_len == 0) {
-                    close(fds[i].fd);
-                    fds[i] = fds[connection_count];
-                    connection_count--;
                 } else {
-                    perror("read() failed");
+                    if (read_len < 0) {
+                        perror("read() failed");
+                    }
                     close(fds[i].fd);
                     fds[i] = fds[connection_count];
                     connection_count--;
+                    fds[0].events = POLLIN;
                 }
             }
         }
