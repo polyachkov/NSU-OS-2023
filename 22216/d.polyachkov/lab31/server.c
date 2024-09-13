@@ -94,7 +94,10 @@ void handle_connections(int server_fd) {
                     }
                     close(fds[i].fd);
                     fds[i] = fds[connection_count];
+                    fds[connection_count].fd = 0;
+                    fds[connection_count].events = 0;
                     connection_count--;
+                    i--;
                     fds[0].events = POLLIN;
                 }
             }
