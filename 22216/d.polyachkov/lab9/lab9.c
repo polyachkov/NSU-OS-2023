@@ -2,16 +2,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <time.h>
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
-        exit(1);
-    }
-
-    if (access(argv[1], F_OK) == -1) {
-        perror("File access check failed");
         exit(1);
     }
 
