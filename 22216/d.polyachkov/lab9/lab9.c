@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <time.h>
 
 int main(int argc, char *argv[]) {
     if (argc != 2) {
@@ -24,25 +23,11 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    time_t start = time(NULL);
-    if(start == (time_t) -1) {
-        perror("time error");
-        exit(1);
-    }
-
     int status;
     if (waitpid(pid, &status, 0) == -1) {
         perror("waitpid failed");
         exit(1);
     }
-
-    time_t end = time(NULL);
-    if(end == (time_t) -1) {
-        perror("time error");
-        exit(1);
-    }
-
-    printf("Parent waited %ld seconds for child to complete.\n", end - start);
 
     if (WIFEXITED(status)) {
         printf("Child exited normally with status: %d\n", WEXITSTATUS(status));
